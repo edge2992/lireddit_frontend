@@ -102,12 +102,12 @@ export type RegisterMutationVariables = Exact<{
 }>;
 
 
-export type RegisterMutation = { __typename?: 'Mutation', login: { __typename?: 'UserResponse', errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null, user?: { __typename?: 'User', username: string, id: number } | null } };
+export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'UserResponse', errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null, user?: { __typename?: 'User', username: string, id: number } | null } };
 
 
 export const RegisterDocument = gql`
     mutation Register($username: String!, $password: String!) {
-  login(options: {username: $username, password: $password}) {
+  register(options: {username: $username, password: $password}) {
     errors {
       field
       message

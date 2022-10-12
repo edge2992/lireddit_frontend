@@ -10,8 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { Wrapper } from "../components/Wrapper";
 import { InputField } from "../components/InputField";
-import { useMutation } from "urql";
-import { useRegisterMutation } from "../generated/graphql.tsx/graphql";
+import { useRegisterMutation } from "../generated/graphql";
 
 interface registerProps {}
 
@@ -23,6 +22,7 @@ const Register: React.FC<registerProps> = ({}) => {
         initialValues={{ username: "", password: "" }}
         onSubmit={async (values) => {
           const response = await register(values)
+          if(response.data.re)
         }}
       >
         {({ isSubmitting }) => (
