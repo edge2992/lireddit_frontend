@@ -7,23 +7,19 @@ import { InputField } from "../components/InputField";
 import { Layout } from "../components/Layout";
 import { useCreatePostMutation, useMeQuery } from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
+import { useIsAuth } from "../utils/useIsAuth";
 
 const CreatePost: React.FC<{}> = ({}) => {
-  const [{data, fetching}] = useMeQuery();
   const router = useRouter();
   const [, createPost] = useCreatePostMutation();
+  useIsAuth();
 
-  useEffect(() => {
-    if(!fetching && !data?.me){
-      router.replace("/login");
-    }
-  }, [data, router]);
   return (
     <Layout variant="small">
       <Formik
         initialValues={{ title: "", text: "" }}
         onSubmit={async (values) => {
-          const {error} = await createPost({input: values});
+          const { error } = await createPost({ input: values });
           if (!error) {
             router.push("/");
           }
