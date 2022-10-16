@@ -41,7 +41,7 @@ export type MutationChangePasswordArgs = {
 
 
 export type MutationCreatePostArgs = {
-  title: Scalars['String'];
+  input: PostInput;
 };
 
 
@@ -71,12 +71,27 @@ export type MutationUpdatePostArgs = {
   title?: InputMaybe<Scalars['String']>;
 };
 
+export type PaginatedPosts = {
+  __typename?: 'PaginatedPosts';
+  hasMore: Scalars['Boolean'];
+  posts: Array<Post>;
+};
+
 export type Post = {
   __typename?: 'Post';
   createdAt: Scalars['String'];
+  creatorId: Scalars['Float'];
   id: Scalars['Float'];
+  points: Scalars['Float'];
+  text: Scalars['String'];
+  textSnippet: Scalars['String'];
   title: Scalars['String'];
   updatedAt: Scalars['String'];
+};
+
+export type PostInput = {
+  text: Scalars['String'];
+  title: Scalars['String'];
 };
 
 export type Query = {
@@ -84,12 +99,18 @@ export type Query = {
   hello: Scalars['String'];
   me?: Maybe<User>;
   post?: Maybe<Post>;
-  posts: Array<Post>;
+  posts: PaginatedPosts;
 };
 
 
 export type QueryPostArgs = {
   id: Scalars['Int'];
+};
+
+
+export type QueryPostsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit: Scalars['Int'];
 };
 
 export type User = {
@@ -127,6 +148,13 @@ export type ChangePasswordMutationVariables = Exact<{
 
 export type ChangePasswordMutation = { __typename?: 'Mutation', changePassword: { __typename?: 'UserResponse', errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null, user?: { __typename?: 'User', id: number, username: string } | null } };
 
+export type CreatePostMutationVariables = Exact<{
+  input: PostInput;
+}>;
+
+
+export type CreatePostMutation = { __typename?: 'Mutation', createPost: { __typename?: 'Post', id: number, createdAt: string, updatedAt: string, title: string, text: string, points: number, creatorId: number } };
+
 export type ForgotPasswordMutationVariables = Exact<{
   email: Scalars['String'];
 }>;
@@ -159,10 +187,13 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: number, username: string } | null };
 
-export type PostsQueryVariables = Exact<{ [key: string]: never; }>;
+export type PostsQueryVariables = Exact<{
+  limit: Scalars['Int'];
+  cursor?: InputMaybe<Scalars['String']>;
+}>;
 
 
-export type PostsQuery = { __typename?: 'Query', posts: Array<{ __typename?: 'Post', id: number, createdAt: string, updatedAt: string, title: string }> };
+export type PostsQuery = { __typename?: 'Query', posts: { __typename?: 'PaginatedPosts', hasMore: boolean, posts: Array<{ __typename?: 'Post', id: number, createdAt: string, updatedAt: string, title: string, textSnippet: string }> } };
 
 export const RegularErrorFragmentDoc = gql`
     fragment RegularError on FieldError {
@@ -197,6 +228,23 @@ export const ChangePasswordDocument = gql`
 
 export function useChangePasswordMutation() {
   return Urql.useMutation<ChangePasswordMutation, ChangePasswordMutationVariables>(ChangePasswordDocument);
+};
+export const CreatePostDocument = gql`
+    mutation CreatePost($input: PostInput!) {
+  createPost(input: $input) {
+    id
+    createdAt
+    updatedAt
+    title
+    text
+    points
+    creatorId
+  }
+}
+    `;
+
+export function useCreatePostMutation() {
+  return Urql.useMutation<CreatePostMutation, CreatePostMutationVariables>(CreatePostDocument);
 };
 export const ForgotPasswordDocument = gql`
     mutation ForgotPassword($email: String!) {
@@ -250,16 +298,20 @@ export function useMeQuery(options?: Omit<Urql.UseQueryArgs<MeQueryVariables>, '
   return Urql.useQuery<MeQuery, MeQueryVariables>({ query: MeDocument, ...options });
 };
 export const PostsDocument = gql`
-    query Posts {
-  posts {
-    id
-    createdAt
-    updatedAt
-    title
+    query Posts($limit: Int!, $cursor: String) {
+  posts(limit: $limit, cursor: $cursor) {
+    posts {
+      id
+      createdAt
+      updatedAt
+      title
+      textSnippet
+    }
+    hasMore
   }
 }
     `;
 
-export function usePostsQuery(options?: Omit<Urql.UseQueryArgs<PostsQueryVariables>, 'query'>) {
+export function usePostsQuery(options: Omit<Urql.UseQueryArgs<PostsQueryVariables>, 'query'>) {
   return Urql.useQuery<PostsQuery, PostsQueryVariables>({ query: PostsDocument, ...options });
 };
