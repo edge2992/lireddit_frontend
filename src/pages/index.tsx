@@ -14,7 +14,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
-import { CloseIcon } from "@chakra-ui/icons";
+import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { UpdootSection } from "../components/UpdootSection";
 
 const Index = () => {
@@ -54,15 +54,28 @@ const Index = () => {
                     <Text flex={1} mt={4}>
                       {p.textSnippet}
                     </Text>
-                    <IconButton
-                      ml="auto"
-                      colorScheme="red"
-                      icon={<CloseIcon />}
-                      aria-label="Delete Post"
-                      onClick={() => {
-                        deletePost({ id: p.id });
-                      }}
-                    />
+                    <Box ml="auto">
+                      <NextLink
+                        href="/post/edit/[id]"
+                        as={`/post/edit/${p.id}`}
+                      >
+                        <IconButton
+                          ml="auto"
+                          as={Link}
+                          mr={2}
+                          icon={<EditIcon />}
+                          aria-label="Edit Post"
+                        />
+                      </NextLink>
+                      <IconButton
+                        ml="auto"
+                        icon={<DeleteIcon />}
+                        aria-label="Delete Post"
+                        onClick={() => {
+                          deletePost({ id: p.id });
+                        }}
+                      />
+                    </Box>
                   </Flex>
                 </Box>
               </Flex>
