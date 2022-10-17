@@ -1,9 +1,9 @@
 import { dedupExchange, errorExchange, fetchExchange, stringifyVariables } from "urql";
 import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
-import { LoginMutation, LogoutMutation, MeQuery, MeDocument, RegisterMutation } from "../generated/graphql";
+import { LoginMutation, LogoutMutation, MeQuery, MeDocument, RegisterMutation, VoteMutationVariables } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
 import Router from "next/router";
-import { FieldsOnCorrectTypeRule } from "graphql";
+import { gql } from "@urql/core";
 
 export const createUrqlClient = (ssrExchange: any) => ({
   url: 'http://localhost:4000/graphql',
@@ -23,12 +23,42 @@ export const createUrqlClient = (ssrExchange: any) => ({
       },
       updates: {
         Mutation: {
+          vote: (_result, args, cache, info) => {
+            const { postId, value } = args as VoteMutationVariables;
+            const data = cache.readFragment(
+              gql`
+                fragment _ on Post {
+                  id
+                  points
+                  voteStatus
+                }
+              `,
+              { id: postId }
+            );
+            console.log("data: ", data);
+            if (data) {
+              if (data.voteStauts == value) {
+                return;
+              }
+              const newPoints = (data.points as number) + ((!data.voteStatus) ? 1 : 2) * value;
+              cache.writeFragment(
+                gql`
+                  fragment __ on Post {
+                    points
+                    voteStatus
+                  }
+                `,
+                { id: postId, points: newPoints, voteStatus: value }
+              )
+            }
+          },
           createPost: (_result, args, cache, info) => {
             cache.inspectFields('Query')
               .filter(info => info.fieldName === 'posts')
               .forEach((fi) => {
                 cache.invalidate('Query', 'posts', fi.arguments || {});
               })
+            console.log(cache.inspectFields('Query'));
           },
           logout: (_result: LoginMutation, args, cache, info) => {
             betterUpdateQuery<LogoutMutation, MeQuery>(
