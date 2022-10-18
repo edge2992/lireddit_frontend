@@ -5,7 +5,7 @@ import {
   Heading,
   Link,
   Stack,
-  Text
+  Text,
 } from "@chakra-ui/react";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
@@ -21,12 +21,17 @@ const Index = () => {
     limit: 15,
     cursor: null as null | string,
   });
-  const [{ data, fetching }] = usePostsQuery({
+  const [{ data, error, fetching }] = usePostsQuery({
     variables,
   });
 
   if (!fetching && !data) {
-    return <div>you got query failed for some reason</div>;
+    return (
+    <Box>
+      <div>you got query failed for some reason</div>
+      <div>{error?.message}</div>
+    </Box>
+    );
   }
 
   return (
