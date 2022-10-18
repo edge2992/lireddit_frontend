@@ -1,10 +1,18 @@
 import { dedupExchange, errorExchange, fetchExchange, stringifyVariables } from "urql";
-import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
+import { cacheExchange, Resolver, Cache } from "@urql/exchange-graphcache";
 import { LoginMutation, LogoutMutation, MeQuery, MeDocument, RegisterMutation, VoteMutationVariables, DeletePostMutationVariables } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
 import Router from "next/router";
 import { gql } from "@urql/core";
 import { isServer } from "./isServer";
+
+function invalidateAllPosts(cache: Cache) {
+  cache.inspectFields('Query')
+    .filter(info => info.fieldName === 'posts')
+    .forEach((fi) => {
+      cache.invalidate('Query', 'posts', fi.arguments || {});
+    })
+}
 
 export const createUrqlClient = (ssrExchange: any, ctx: any) => {
   let cookie = "";
@@ -63,11 +71,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
               }
             },
             createPost: (_result, args, cache, info) => {
-              cache.inspectFields('Query')
-                .filter(info => info.fieldName === 'posts')
-                .forEach((fi) => {
-                  cache.invalidate('Query', 'posts', fi.arguments || {});
-                })
+              invalidateAllPosts(cache);
             },
             logout: (_result: LoginMutation, args, cache, info) => {
               betterUpdateQuery<LogoutMutation, MeQuery>(
@@ -92,6 +96,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                   }
                 }
               );
+              invalidateAllPosts(cache);
             },
             register: (_result: RegisterMutation, args, cache, info) => {
               betterUpdateQuery<RegisterMutation, MeQuery>(
@@ -126,8 +131,6 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
 
 export type MergeMode = 'before' | 'after';
 
-
-
 export const cursorPagination = (
   cursorArgument = 'cursor',
 ): Resolver => {
@@ -158,59 +161,5 @@ export const cursorPagination = (
       hasMore: hasMore,
       posts: results
     };
-
-
-
-    // const visited = new Set();
-    // let result: NullArray<string> = [];
-    // let prevOffset: number | null = null;
-
-    // for (let i = 0; i < size; i++) {
-    //   const { fieldKey, arguments: args } = fieldInfos[i];
-    //   if (args === null || !compareArgs(fieldArgs, args)) {
-    //     continue;
-    //   }
-
-    //   const links = cache.resolve(entityKey, fieldKey) as string[];
-    //   const currentOffset = args[cursorArgument];
-
-    //   if (
-    //     links === null ||
-    //     links.length === 0 ||
-    //     typeof currentOffset !== 'number'
-    //   ) {
-    //     continue;
-    //   }
-
-    //   const tempResult: NullArray<string> = [];
-
-    //   for (let j = 0; j < links.length; j++) {
-    //     const link = links[j];
-    //     if (visited.has(link)) continue;
-    //     tempResult.push(link);
-    //     visited.add(link);
-    //   }
-
-    //   if (
-    //     (!prevOffset || currentOffset > prevOffset) ===
-    //     (mergeMode === 'after')
-    //   ) {
-    //     result = [...result, ...tempResult];
-    //   } else {
-    //     result = [...tempResult, ...result];
-    //   }
-
-    //   prevOffset = currentOffset;
-    // }
-
-    // const hasCurrentPage = cache.resolve(entityKey, fieldName, fieldArgs);
-    // if (hasCurrentPage) {
-    //   return result;
-    // } else if (!(info as any).store.schema) {
-    //   return undefined;
-    // } else {
-    //   info.partial = true;
-    //   return result;
-    // }
   };
 };
